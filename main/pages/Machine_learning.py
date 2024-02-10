@@ -176,18 +176,12 @@ if uploaded_file is not None and dataset == "Классификация":
         progress_bar.progress(i + 20)
         i = i + 20
         
-        scaler = StandardScaler()
-
-        numeric_features = ['unit_price', 'total_price'] 
-        df[numeric_features] = scaler.fit_transform(df[numeric_features])
         progress_bar.progress(i + 20)
         i = i + 20
         y = df_filtered["pizza_category"]
         X = df_filtered.drop(["pizza_category"], axis=1)
-        X, _, y, _ = train_test_split(X, y, test_size=0.5, random_state=42)
+        X, _, y, _ = train_test_split(X, y, test_size=0.9, random_state=42)
         
-        nm = NearMiss()
-        X, y = nm.fit_resample(X, y.ravel())
         
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
         progress_bar.progress(i + 20)
