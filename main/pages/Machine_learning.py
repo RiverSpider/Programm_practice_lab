@@ -133,7 +133,7 @@ if uploaded_file is not None and dataset == "Классификация":
     
     if button_clicked:
         st.title("Предобработка данных")   
-        df.drop(['pizza_ingredients', 'order_date', 'order_time', 'pizza_name_id', 'order_id', 'pizza_id', 'pizza_name'], axis=1)
+        df = df.drop(['pizza_ingredients', 'order_date', 'order_time', 'pizza_name_id', 'order_id', 'pizza_id', 'pizza_name'], axis=1)
         progress_bar = st.progress(0)
         i = 0
         progress_bar.progress(i + 10)
