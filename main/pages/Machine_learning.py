@@ -133,7 +133,7 @@ if uploaded_file is not None and dataset == "Классификация":
     
     if button_clicked:
         st.title("Предобработка данных")   
-        df = df.drop(['pizza_ingredients', 'order_date', 'order_time', 'pizza_name_id', 'order_id', 'pizza_id', 'pizza_name'], axis=1)
+        df = df.drop(['pizza_ingredients', 'order_date', 'order_time', 'pizza_name_id', 'order_id', 'pizza_id'], axis=1)
         progress_bar = st.progress(0)
         i = 0
         progress_bar.progress(i + 10)
@@ -180,7 +180,7 @@ if uploaded_file is not None and dataset == "Классификация":
         i = i + 20
         y = df_filtered["pizza_category"]
         X = df_filtered.drop(["pizza_category"], axis=1)
-        X, _, y, _ = train_test_split(X, y, test_size=0.9, random_state=42)
+        X, _, y, _ = train_test_split(X, y, test_size=0.5, random_state=42)
         
         
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
