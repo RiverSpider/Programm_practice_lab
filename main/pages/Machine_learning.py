@@ -114,7 +114,7 @@ if uploaded_file is not None and dataset == "Регрессия":
         mae = mean_absolute_error(y_test, y_pred)
         mse = mean_squared_error(y_test, y_pred)
         rmse = np.sqrt(mse)
-        mape = np.mean(np.abs((y_test - y_pred) / y_true)) * 100
+        mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
         st.write('R2: {:.3f}'.format(r2))
         st.write('MAE: {:.3f}'.format(mae))
         st.write('MSE: {:.3f}'.format(mse))
