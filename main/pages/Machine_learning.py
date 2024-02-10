@@ -212,8 +212,8 @@ if uploaded_file is not None and dataset == "Классификация":
         st.success("Модель обучена!")
         
         st.title("Метрики модели")
-        st.write('Accuracy: {:.3f}'.format(accuracy_score(y_test, y_pred)))
-        st.write('Precision: {:.3f}'.format(precision_score(y_test, y_pred)))
-        st.write('Recall: {:.3f}'.format(recall_score(y_test, y_pred)))
-        st.write('F1-score: {:.3f}'.format(f1_score(y_test, y_pred)))
-        st.write('ROC-AUC: {:.3f}'.format(roc_auc_score(y_test, y_pred)))
+        st.write('Accuracy: {:.3f}'.format(accuracy_score(y_test, y_pred, average='macro')))
+        st.write('Precision: {:.3f}'.format(precision_score(y_test, y_pred, average='macro')))
+        st.write('Recall: {:.3f}'.format(recall_score(y_test, y_pred, average='macro')))
+        st.write('F1-score: {:.3f}'.format(f1_score(y_test, y_pred, average='macro')))
+        st.write('ROC-AUC: {:.3f}'.format(roc_auc_score(y_test, y_pred, multi_class='ovr')))
