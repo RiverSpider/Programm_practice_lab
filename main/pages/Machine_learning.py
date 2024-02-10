@@ -216,4 +216,3 @@ if uploaded_file is not None and dataset == "Классификация":
         st.write('Precision: {:.3f}'.format(precision_score(y_test, y_pred, average='macro')))
         st.write('Recall: {:.3f}'.format(recall_score(y_test, y_pred, average='macro')))
         st.write('F1-score: {:.3f}'.format(f1_score(y_test, y_pred, average='macro')))
-        st.write('ROC-AUC: {:.3f}'.format(roc_auc_score(y_test, y_pred, multi_class='ovo')))
