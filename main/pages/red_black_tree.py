@@ -118,7 +118,7 @@ def visualize_red_black_tree(tree):
     pos = nx.spring_layout(G)
     color_map = {'red': 'red', 'black': 'black'}  
     colors = [color_map[color] for color in node_colors]  
-    nx.draw(G, pos, with_labels=True, node_color=colors, node_size=1000, font_size=10)
+    nx.draw(G, pos, with_labels=True, node_color=colors, node_size=1000, font_size=10, font_color='white')
     
     tmp_file = tempfile.NamedTemporaryFile(delete=False)
     plt.savefig(tmp_file.name, format='png')
