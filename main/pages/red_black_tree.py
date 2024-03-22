@@ -3,6 +3,7 @@ import networkx as nx
 import streamlit as st
 import random
 import graphviz
+import tempfile
 
 class Node:
     def __init__(self, value, color, left=None, right=None, parent=None):
