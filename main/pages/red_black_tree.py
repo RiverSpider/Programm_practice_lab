@@ -115,12 +115,14 @@ def visualize_red_black_tree(tree):
     node_colors = [node[1]['color'] for node in G.nodes(data=True)]
     
     pos = nx.spring_layout(G)
-    color_map = {'red': 'red', 'black': 'black'}
-    colors = [color_map[color] for color in node_colors]
-    
+    color_map = {'red': 'red', 'black': 'black'}  
+    colors = [color_map[color] for color in node_colors]  
     nx.draw(G, pos, with_labels=True, node_color=colors, node_size=1000, font_size=10)
     
-    plt.show()
+    tmp_file = tempfile.NamedTemporaryFile(delete=False)
+    plt.savefig(tmp_file.name, format='png')
+
+    st.image(tmp_file.name, caption='Red-Black Tree Visualization', use_column_width=True)
 
 def main():
     st.title('Красно-черное дерево визуализатор')
