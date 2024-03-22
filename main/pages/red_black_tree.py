@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import streamlit as st
 import random
+import graphviz
 
 class Node:
     def __init__(self, value, color, left=None, right=None, parent=None):
@@ -98,20 +99,21 @@ class RedBlackTree:
         node.parent = new_node
 
 def visualize_red_black_tree(tree):
-    G = nx.DiGraph()
-    queue = [(tree.root, 0, 0)]
-    while queue:
-        node, level, pos = queue.pop()
-        G.add_node(node.value, pos=(pos, -level))
-        if node.left != tree.nil:
-            queue.insert(0, (node.left, level + 1, pos - 2 ** (5 - level)))
-            G.add_edge(node.value, node.left.value)
-        if node.right != tree.nil:
-            queue.insert(0, (node.right, level + 1, pos + 2 ** (5 - level)))
-            G.add_edge(node.value, node.right.value)
-    pos = nx.get_node_attributes(G, 'pos')
-    nx.draw(G, pos, with_labels=True, arrows=False)
-    plt.show()
+    dot = graphviz.Digraph()
+    
+    def add_nodes_edges(node):
+        if node != tree.nil:
+            dot.node(str(node.value), color=node.color)
+            if node.left != tree.nil:
+                dot.edge(str(node.value), str(node.left.value))
+                add_nodes_edges(node.left)
+            if node.right != tree.nil:
+                dot.edge(str(node.value), str(node.right.value))
+                add_nodes_edges(node.right)
+    
+    add_nodes_edges(tree.root)
+    dot.render('red_black_tree', format='png', cleanup=True)
+    return dot
 
 def main():
     st.title('Красно-черное дерево визуализатор')
