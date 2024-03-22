@@ -99,21 +99,25 @@ class RedBlackTree:
         node.parent = new_node
 
 def visualize_red_black_tree(tree):
-    dot = graphviz.Digraph()
+    G = nx.DiGraph()
     
-    def add_nodes_edges(node):
-        if node != tree.nil:
-            dot.node(str(node.value), color=node.color)
-            if node.left != tree.nil:
-                dot.edge(str(node.value), str(node.left.value))
-                add_nodes_edges(node.left)
-            if node.right != tree.nil:
-                dot.edge(str(node.value), str(node.right.value))
-                add_nodes_edges(node.right)
+    def add_nodes_edges(tree_node, parent=None):
+        if tree_node is None:
+            return
+        G.add_node(tree_node.value, color=tree_node.color)
+        if parent is not None:
+            G.add_edge(parent.value, tree_node.value)
+        add_nodes_edges(tree_node.left, tree_node)
+        add_nodes_edges(tree_node.right, tree_node)
     
     add_nodes_edges(tree.root)
-    dot.render('red_black_tree', format='png', cleanup=True)
-    return dot
+    
+    node_colors = [node[1]['color'] for node in G.nodes(data=True)]
+    
+    pos = nx.spring_layout(G)
+    nx.draw(G, pos, with_labels=True, node_color=node_colors, cmap=plt.cm.Set1, node_size=1000, font_size=10)
+    
+    plt.show()
 
 def main():
     st.title('Красно-черное дерево визуализатор')
