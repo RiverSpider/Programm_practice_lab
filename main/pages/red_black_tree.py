@@ -115,7 +115,10 @@ def visualize_red_black_tree(tree):
     node_colors = [node[1]['color'] for node in G.nodes(data=True)]
     
     pos = nx.spring_layout(G)
-    nx.draw(G, pos, with_labels=True, node_color=node_colors, cmap=plt.cm.Set1, node_size=1000, font_size=10)
+    color_map = {'red': 'red', 'black': 'black'}
+    colors = [color_map[color] for color in node_colors]
+    
+    nx.draw(G, pos, with_labels=True, node_color=colors, node_size=1000, font_size=10)
     
     plt.show()
 
