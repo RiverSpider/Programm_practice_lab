@@ -19,6 +19,7 @@ class RedBlackTree:
     def insert(self, value):
         new_node = Node(value, 'red', self.nil, self.nil, None)
         current = self.root
+        potential_parent = self.nil
         while current != self.nil:
             potential_parent = current
             if new_node.value < current.value:
