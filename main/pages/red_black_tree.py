@@ -19,30 +19,30 @@ class Color(Enum):
     Red = 'red'
 
 class Position:
-    def __init__(self, x: int, y: int) -> None:
-        self.x = x
-        self.y = y
+	def __init__(self, x: int, y: int) -> None:
+		self.x = x
+		self.y = y
 
-    def __add__(self, obj):
-        if isinstance(obj, Position):
-            return Position(self.x + obj.x, self.y + obj.y)
-        elif isinstance(obj, tuple):
-            return Position(self.x + obj[0], self.y + obj[1])
-        raise TypeError(f'unsupported operand type(s) for +: Position and {type(obj)}')
-    
-    def __isub__(self, obj):
-        if isinstance(obj, Position):
-            return Position(self.x - obj.x, self.y - obj.y)
-        elif isinstance(obj, tuple):
-            return Position(self.x - obj[0], self.y - obj[1])
-        raise TypeError(f'unsupported operand type(s) for -=: Position and {type(obj)}')
-    
-    def __repr__(self) -> str:
-        return f'<Position{self.value}>'
+	def __add__(self, obj):
+		if isinstance(obj, Position):
+			return Position(self.x + obj.x, self.y + obj.y)
+		elif isinstance(obj, tuple):
+			return Position(self.x + obj[0], self.y + obj[1])
+		raise TypeError(f'unsupported operand type(s) for +: Position and {type(obj)}')
+	
+	def __isub__(self, obj):
+		if isinstance(obj, Position):
+			return Position(self.x - obj.x, self.y - obj.y)
+		elif isinstance(obj, tuple):
+			return Position(self.x - obj[0], self.y - obj[1])
+		raise TypeError(f'unsupported operand type(s) for -=: Position and {type(obj)}')
+	
+	def __repr__(self) -> str:
+		return f'<Position{self.value}>'
 
-    @property
-    def value(self) -> tuple:
-        return (self.x, self.y)
+	@property
+	def value(self) -> tuple:
+		return (self.x, self.y)
 
 class Node:
     Height = 1
@@ -84,51 +84,66 @@ class Node:
     def child(self, value: int):
         return self.left if value < self else self.right
 
+    @classmethod
     def update_height_and_position(cls, values_count: int):
         pred_height = cls.Height
         cls.Height = int(2 * math.log2(values_count + 1))
         if cls.Height - pred_height > 0:
-            cls.Pos += (sum([2**n for n in range(pred_height, cls.Height)]), 2 * (cls.Height - pred_height))
+            cls.Pos += (sum([2**n for n in range(pred_height,
+                        cls.Height)]), 2 * (cls.Height - pred_height))
         else:
-            cls.Pos -= (sum([2**n for n in range(cls.Height, pred_height)]), 2 * (pred_height - cls.Height))
+            cls.Pos -= (sum([2**n for n in range(cls.Height,
+                        pred_height)]), 2 * (pred_height - cls.Height))
 
+    @property
     def brother(self):
         if not self.father:
             return None
         return self.father.right if self.is_left else self.father.left
 
+    @property
     def children_count(self) -> int:
         return bool(self.right) + bool(self.left)
 
+    @property
     def grandpa(self):
         return self.father.father if self.father else None
 
+    @property
     def height(self):
         return Node.Height if not self.father else self.father.height - 1
 
+    @property
     def is_black(self) -> bool:
         return self.color == Color.Black
 
+    @property
     def is_left(self) -> bool:
         return bool(self.father) and self is self.father.left
 
+    @property
     def is_red(self) -> bool:
         return self.color == Color.Red
 
+    @property
     def position(self) -> Position:
         return Node.Pos if not self.father else self.father.position + ((-1)**self.is_left * 2**(self.father.height - 1), -2)
 
+    @property
     def uncle(self):
         return self.father.brother if self.father else None
 
+    @property
     def value(self) -> int:
         return self._value
 
+    @value.setter
     def value(self, value: int) -> None:
         self._value = value if isinstance(value, int) else None
         if self._value:
             self.left = self.left if self.left != None else Node(father=self)
-            self.right = self.right if self.right != None else Node(father=self)
+            self.right = self.right if self.right != None else Node(
+                father=self)
         else:
             self.color = Color.Black
             self.left = None
@@ -274,12 +289,15 @@ class RedBlackTree:
         }
         return g, self.positions, options
 
+    @property
     def colors(self) -> list[str]:
         return [node.color.value for node in self.nodes.values()]
 
+    @property
     def edges(self) -> list[tuple[Node]]:
         return [(node, child) for node in self.nodes.values() for child in [node.right, node.left] if node]
 
+    @property
     def positions(self) -> dict[Node, tuple[int]]:
         return {node: node.position.value for node in self.nodes.values()}
 
