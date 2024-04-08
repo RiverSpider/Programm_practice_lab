@@ -70,7 +70,7 @@ class Node:
         if not isinstance(obj, (Node, int)):
             raise ValueError('Object {} not in [Node, int] type'.format(obj))
         return self.value > obj.value if isinstance(obj, Node) else self.value > obj
-
+        
     def __hash__(self) -> int:
         return object.__hash__(self)
 
@@ -78,7 +78,7 @@ class Node:
         if not isinstance(obj, (Node, int)):
             raise ValueError('Object {} not in [Node, int] type'.format(obj))
         return self.value < obj.value if isinstance(obj, Node) else self.value < obj
-
+        
     def __str__(self) -> str:
         return str(self.value) if self else 'n'
 
