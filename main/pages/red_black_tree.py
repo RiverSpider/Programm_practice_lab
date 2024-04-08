@@ -122,14 +122,16 @@ class Node:
     def uncle(self):
         return self.father.brother if self.father else None
 
+    @property
     def value(self) -> int:
         return self._value
 
+    @value.setter
     def value(self, value: int) -> None:
         self._value = value if isinstance(value, int) else None
         if self._value:
-            self.left = self.left if self.left != None else Node(father=self)
-            self.right = self.right if self.right != None else Node(father=self)
+            self.left = self.left if self.left is not None else Node(father=self)
+            self.right = self.right if self.right is not None else Node(father=self)
         else:
             self.color = Color.Black
             self.left = None
