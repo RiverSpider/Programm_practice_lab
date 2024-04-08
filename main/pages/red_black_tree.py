@@ -6,7 +6,6 @@ import graphviz
 import tempfile
 from typing import Optional, Tuple
 from graphviz import Digraph, Graph
-from typing import Optional
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -70,7 +69,7 @@ class Node:
         if not isinstance(obj, (Node, int)):
             raise ValueError('Object {} not in [Node, int] type'.format(obj))
         return self.value > obj.value if isinstance(obj, Node) else self.value > obj
-        
+
     def __hash__(self) -> int:
         return object.__hash__(self)
 
@@ -78,14 +77,13 @@ class Node:
         if not isinstance(obj, (Node, int)):
             raise ValueError('Object {} not in [Node, int] type'.format(obj))
         return self.value < obj.value if isinstance(obj, Node) else self.value < obj
-        
+
     def __str__(self) -> str:
         return str(self.value) if self else 'n'
 
     def child(self, value: int):
         return self.left if value < self else self.right
 
-    @classmethod
     def update_height_and_position(cls, values_count: int):
         pred_height = cls.Height
         cls.Height = int(2 * math.log2(values_count + 1))
@@ -94,54 +92,43 @@ class Node:
         else:
             cls.Pos -= (sum([2**n for n in range(cls.Height, pred_height)]), 2 * (pred_height - cls.Height))
 
-    @property
     def brother(self):
         if not self.father:
             return None
         return self.father.right if self.is_left else self.father.left
 
-    @property
     def children_count(self) -> int:
         return bool(self.right) + bool(self.left)
 
-    @property
     def grandpa(self):
         return self.father.father if self.father else None
 
-    @property
     def height(self):
         return Node.Height if not self.father else self.father.height - 1
 
-    @property
     def is_black(self) -> bool:
         return self.color == Color.Black
 
-    @property
     def is_left(self) -> bool:
         return bool(self.father) and self is self.father.left
-        
-    @property
+
     def is_red(self) -> bool:
         return self.color == Color.Red
 
-    @property
     def position(self) -> Position:
         return Node.Pos if not self.father else self.father.position + ((-1)**self.is_left * 2**(self.father.height - 1), -2)
-    
-    @property
+
     def uncle(self):
         return self.father.brother if self.father else None
 
-    @property
     def value(self) -> int:
         return self._value
 
-    @value.setter
     def value(self, value: int) -> None:
         self._value = value if isinstance(value, int) else None
         if self._value:
-            self.left = self.left if self.left is not None else Node(father=self)
-            self.right = self.right if self.right is not None else Node(father=self)
+            self.left = self.left if self.left != None else Node(father=self)
+            self.right = self.right if self.right != None else Node(father=self)
         else:
             self.color = Color.Black
             self.left = None
@@ -253,7 +240,7 @@ class RedBlackTree:
             node.value = None
         elif node.children_count == 1:
             node_child = node.left or node.right
-            node.value, node_child.value = node_child.value, node.value()
+            node.value, node_child.value = node_child.value, node.value
             self.delete(node_child)
         elif node.children_count == 2:
             max_right_child = node.left
@@ -267,7 +254,7 @@ class RedBlackTree:
         for value in values:
             self.delete(value)
 
-    def search(self, value: int) -> Optional[Node]:
+    def search(self, value: int) -> Node:
         node = self.root
         while node and node != value:
             node = node.child(value)
@@ -287,15 +274,12 @@ class RedBlackTree:
         }
         return g, self.positions, options
 
-    @property
     def colors(self) -> list[str]:
         return [node.color.value for node in self.nodes.values()]
 
-    @property
     def edges(self) -> list[tuple[Node]]:
         return [(node, child) for node in self.nodes.values() for child in [node.right, node.left] if node]
 
-    @property
     def positions(self) -> dict[Node, tuple[int]]:
         return {node: node.position.value for node in self.nodes.values()}
 
