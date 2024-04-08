@@ -6,6 +6,7 @@ import graphviz
 import tempfile
 from typing import Optional, Tuple
 from graphviz import Digraph, Graph
+from typing import Optional
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -240,7 +241,7 @@ class RedBlackTree:
             node.value = None
         elif node.children_count == 1:
             node_child = node.left or node.right
-            node.value, node_child.value = node_child.value, node.value
+            node.value, node_child.value = node_child.value, node.value()
             self.delete(node_child)
         elif node.children_count == 2:
             max_right_child = node.left
@@ -254,7 +255,7 @@ class RedBlackTree:
         for value in values:
             self.delete(value)
 
-    def search(self, value: int) -> Node:
+    def search(self, value: int) -> Optional[Node]:
         node = self.root
         while node and node != value:
             node = node.child(value)
