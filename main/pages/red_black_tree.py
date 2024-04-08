@@ -6,6 +6,7 @@ import graphviz
 import tempfile
 from typing import Optional, Tuple
 from graphviz import Digraph, Graph
+from typing import Union
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -228,7 +229,7 @@ class RedBlackTree:
         for value in values:
             self.insert(value)
 
-    def delete(self, obj: int | Node):
+    def delete(self, obj: Union[int, Node]):
         node = obj if isinstance(obj, Node) else self.search(obj)
         if not node:
             raise ValueError(f'Value {obj} not exists in tree')
