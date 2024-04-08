@@ -6,7 +6,6 @@ import graphviz
 import tempfile
 from typing import Optional, Tuple
 from graphviz import Digraph, Graph
-from typing import Union
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -67,24 +66,18 @@ class Node:
         return False
 
     def __gt__(self, obj) -> bool:
-        if self._value is None:
-            return False
-        if isinstance(obj, Node):
-            return self._value > obj.value if obj.value else False
-        elif isinstance(obj, int):
-            return self._value > obj
-        raise ValueError('Object {} not in [Node, int] type'.format(obj))
+        if not isinstance(obj, (Node, int)):
+            raise ValueError('Object {} not in [Node, int] type'.format(obj))
+        return self.value > obj.value if isinstance(obj, Node) else self.value > obj
 
     def __hash__(self) -> int:
         return object.__hash__(self)
 
     def __lt__(self, obj) -> bool:
-        if self._value is None:
-            return False
         if not isinstance(obj, (Node, int)):
             raise ValueError('Object {} not in [Node, int] type'.format(obj))
-        return self._value < obj.value if isinstance(obj, Node) else self._value < obj
-        
+        return self.value < obj.value if isinstance(obj, Node) else self.value < obj
+
     def __str__(self) -> str:
         return str(self.value) if self else 'n'
 
@@ -235,7 +228,7 @@ class RedBlackTree:
         for value in values:
             self.insert(value)
 
-    def delete(self, obj: Union[int, Node]):
+    def delete(self, obj: int | Node):
         node = obj if isinstance(obj, Node) else self.search(obj)
         if not node:
             raise ValueError(f'Value {obj} not exists in tree')
