@@ -85,6 +85,7 @@ class Node:
     def child(self, value: int):
         return self.left if value < self else self.right
 
+    @classmethod
     def update_height_and_position(cls, values_count: int):
         pred_height = cls.Height
         cls.Height = int(2 * math.log2(values_count + 1))
@@ -93,32 +94,41 @@ class Node:
         else:
             cls.Pos -= (sum([2**n for n in range(cls.Height, pred_height)]), 2 * (pred_height - cls.Height))
 
+    @property
     def brother(self):
         if not self.father:
             return None
         return self.father.right if self.is_left else self.father.left
 
+    @property
     def children_count(self) -> int:
         return bool(self.right) + bool(self.left)
 
+    @property
     def grandpa(self):
         return self.father.father if self.father else None
 
+    @property
     def height(self):
         return Node.Height if not self.father else self.father.height - 1
 
+    @property
     def is_black(self) -> bool:
         return self.color == Color.Black
 
+    @property
     def is_left(self) -> bool:
         return bool(self.father) and self is self.father.left
-
+        
+    @property
     def is_red(self) -> bool:
         return self.color == Color.Red
 
+    @property
     def position(self) -> Position:
         return Node.Pos if not self.father else self.father.position + ((-1)**self.is_left * 2**(self.father.height - 1), -2)
-
+    
+    @property
     def uncle(self):
         return self.father.brother if self.father else None
 
@@ -277,12 +287,15 @@ class RedBlackTree:
         }
         return g, self.positions, options
 
+    @property
     def colors(self) -> list[str]:
         return [node.color.value for node in self.nodes.values()]
 
+    @property
     def edges(self) -> list[tuple[Node]]:
         return [(node, child) for node in self.nodes.values() for child in [node.right, node.left] if node]
 
+    @property
     def positions(self) -> dict[Node, tuple[int]]:
         return {node: node.position.value for node in self.nodes.values()}
 
