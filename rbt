@@ -1,0 +1,5 @@
+digraph {
+	node [fillcolor=black fontcolor=white shape=circle style=filled]
+	edge [color=red]
+	0 [label=0 fillcolor=black]
+}

@@ -8,3 +8,4 @@ cvxopt
 tensorflow
 scipy
 networkx
+graphviz

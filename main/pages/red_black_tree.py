@@ -4,141 +4,398 @@ import streamlit as st
 import random
 import graphviz
 import tempfile
+from typing import Optional, Tuple
+from graphviz import Digraph, Graph
+
+st.set_option('deprecation.showPyplotGlobalUse', False)
+
+from enum import Enum
+import networkx as nx
+import time
+import math
+
+class Color(Enum):
+    Black = 'black'
+    Red = 'red'
+
+class Position:
+    def __init__(self, x: int, y: int) -> None:
+        self.x = x
+        self.y = y
+
+    def __add__(self, obj):
+        if isinstance(obj, Position):
+            return Position(self.x + obj.x, self.y + obj.y)
+        elif isinstance(obj, tuple):
+            return Position(self.x + obj[0], self.y + obj[1])
+        raise TypeError(f'unsupported operand type(s) for +: Position and {type(obj)}')
+    
+    def __isub__(self, obj):
+        if isinstance(obj, Position):
+            return Position(self.x - obj.x, self.y - obj.y)
+        elif isinstance(obj, tuple):
+            return Position(self.x - obj[0], self.y - obj[1])
+        raise TypeError(f'unsupported operand type(s) for -=: Position and {type(obj)}')
+    
+    def __repr__(self) -> str:
+        return f'<Position{self.value}>'
+
+    @property
+    def value(self) -> tuple:
+        return (self.x, self.y)
 
 class Node:
-    def __init__(self, value, color, left=None, right=None, parent=None):
-        self.value = value
-        self.color = color
-        self.left = left
-        self.right = right
-        self.parent = parent
+    Height = 1
+    Pos = Position(0, 0)
+
+    def __init__(self, father=None) -> None:
+        self.color = Color.Black
+        self.father: Node | None = father
+        self.left: Node | None = None
+        self.right: Node | None = None
+        self._value: int | None = None
+
+    def __bool__(self) -> bool:
+        return bool(self.value)
+
+    def __eq__(self, obj) -> bool:
+        if isinstance(obj, Node):
+            return self.value == obj.value if self or obj else self is obj
+        elif isinstance(obj, int):
+            return self.value == obj
+        return False
+
+    def __gt__(self, obj) -> bool:
+        if not isinstance(obj, (Node, int)):
+            raise ValueError('Object {} not in [Node, int] type'.format(obj))
+        return self.value > obj.value if isinstance(obj, Node) else self.value > obj
+
+    def __hash__(self) -> int:
+        return object.__hash__(self)
+
+    def __lt__(self, obj) -> bool:
+        if not isinstance(obj, (Node, int)):
+            raise ValueError('Object {} not in [Node, int] type'.format(obj))
+        return self.value < obj.value if isinstance(obj, Node) else self.value < obj
+
+    def __str__(self) -> str:
+        return str(self.value) if self else 'n'
+
+    def child(self, value: int):
+        return self.left if value < self else self.right
+
+    def update_height_and_position(cls, values_count: int):
+        pred_height = cls.Height
+        cls.Height = int(2 * math.log2(values_count + 1))
+        if cls.Height - pred_height > 0:
+            cls.Pos += (sum([2**n for n in range(pred_height, cls.Height)]), 2 * (cls.Height - pred_height))
+        else:
+            cls.Pos -= (sum([2**n for n in range(cls.Height, pred_height)]), 2 * (pred_height - cls.Height))
+
+    def brother(self):
+        if not self.father:
+            return None
+        return self.father.right if self.is_left else self.father.left
+
+    def children_count(self) -> int:
+        return bool(self.right) + bool(self.left)
+
+    def grandpa(self):
+        return self.father.father if self.father else None
+
+    def height(self):
+        return Node.Height if not self.father else self.father.height - 1
+
+    def is_black(self) -> bool:
+        return self.color == Color.Black
+
+    def is_left(self) -> bool:
+        return bool(self.father) and self is self.father.left
+
+    def is_red(self) -> bool:
+        return self.color == Color.Red
+
+    def position(self) -> Position:
+        return Node.Pos if not self.father else self.father.position + ((-1)**self.is_left * 2**(self.father.height - 1), -2)
+
+    def uncle(self):
+        return self.father.brother if self.father else None
+
+    def value(self) -> int:
+        return self._value
+
+    def value(self, value: int) -> None:
+        self._value = value if isinstance(value, int) else None
+        if self._value:
+            self.left = self.left if self.left != None else Node(father=self)
+            self.right = self.right if self.right != None else Node(father=self)
+        else:
+            self.color = Color.Black
+            self.left = None
+            self.right = None
 
 class RedBlackTree:
     def __init__(self):
-        self.nil = Node(0, 'black')
-        self.root = self.nil
+        self.root: Node = Node()
+        self.nodes: dict[int, Node] = {hash(self.root): self.root}
 
-    def insert(self, value):
-        new_node = Node(value, 'red', self.nil, self.nil, None)
-        current = self.root
-        potential_parent = self.nil
-        while current != self.nil:
-            potential_parent = current
-            if new_node.value < current.value:
-                current = current.left
-            else:
-                current = current.right
-        new_node.parent = potential_parent
-        if potential_parent == self.nil:
-            self.root = new_node
-        elif new_node.value < potential_parent.value:
-            potential_parent.left = new_node
-        else:
-            potential_parent.right = new_node
-        self._insert_fixup(new_node)
+    def __repr__(self) -> str:
+        return '<RedBlackTree(Nodes={})>'.format([str(node) for node in self.nodes.values() if node])
 
-    def _insert_fixup(self, node):
-        while node.parent.color == 'red':
-            if node.parent == node.parent.parent.left:
-                uncle = node.parent.parent.right
-                if uncle.color == 'red':
-                    node.parent.color = 'black'
-                    uncle.color = 'black'
-                    node.parent.parent.color = 'red'
-                    node = node.parent.parent
-                else:
-                    if node == node.parent.right:
-                        node = node.parent
-                        self._left_rotate(node)
-                    node.parent.color = 'black'
-                    node.parent.parent.color = 'red'
-                    self._right_rotate(node.parent.parent)
-            else:
-                uncle = node.parent.parent.left
-                if uncle.color == 'red':
-                    node.parent.color = 'black'
-                    uncle.color = 'black'
-                    node.parent.parent.color = 'red'
-                    node = node.parent.parent
-                else:
-                    if node == node.parent.left:
-                        node = node.parent
-                        self._right_rotate(node)
-                    node.parent.color = 'black'
-                    node.parent.parent.color = 'red'
-                    self._left_rotate(node.parent.parent)
-        self.root.color = 'black'
+    def __balance(self, node: Node):
+        if node.grandpa and node.father.is_red:
+            if node.uncle.is_red:
+                node.father.color = Color.Black
+                node.uncle.color = Color.Black
+                node.grandpa.color = Color.Red
+                self.__balance(node.grandpa)
+            elif node.father < node.grandpa:
+                self.__LLturn(node)
+            elif node.father > node.grandpa:
+                self.__RRturn(node)
+        self.root.color = Color.Black
+        Node.update_height_and_position(len(self.nodes))
 
-    def _left_rotate(self, node):
-        new_node = node.right
-        node.right = new_node.left
-        if new_node.left != self.nil:
-            new_node.left.parent = node
-        new_node.parent = node.parent
-        if node.parent == self.nil:
-            self.root = new_node
-        elif node == node.parent.left:
-            node.parent.left = new_node
-        else:
-            node.parent.right = new_node
-        new_node.left = node
-        node.parent = new_node
-
-    def _right_rotate(self, node):
-        new_node = node.left
-        node.left = new_node.right
-        if new_node.right != self.nil:
-            new_node.right.parent = node
-        new_node.parent = node.parent
-        if node.parent == self.nil:
-            self.root = new_node
-        elif node == node.parent.right:
-            node.parent.right = new_node
-        else:
-            node.parent.left = new_node
-        new_node.right = node
-        node.parent = new_node
-
-def visualize_red_black_tree(tree):
-    G = nx.DiGraph()
-    
-    def add_nodes_edges(tree_node, parent=None):
-        if tree_node is None:
+    def __black_list_case(self, node: Node):
+        brother = node.brother
+        if not brother:
             return
-        G.add_node(tree_node.value, color=tree_node.color)
-        if parent is not None:
-            G.add_edge(parent.value, tree_node.value)
-        add_nodes_edges(tree_node.left, tree_node)
-        add_nodes_edges(tree_node.right, tree_node)
-    
-    add_nodes_edges(tree.root)
-    
-    node_colors = [node[1]['color'] for node in G.nodes(data=True)]
-    
-    pos = nx.spring_layout(G)
-    color_map = {'red': 'red', 'black': 'black'}  
-    colors = [color_map[color] for color in node_colors]  
-    nx.draw(G, pos, with_labels=True, node_color=colors, node_size=1000, font_size=10, font_color='white')
-    
-    tmp_file = tempfile.NamedTemporaryFile(delete=False)
-    plt.savefig(tmp_file.name, format='png')
+        if brother.is_black:
+            if brother.left.is_black and brother.right.is_black:
+                brother.color = Color.Red
+                if brother.father.is_red:
+                    brother.father.color = Color.Black
+                else:
+                    self.__black_list_case(node.father)
+            elif brother.is_left:
+                if brother.right.is_red:
+                    self.__RRturn(brother.right.right)
+                brother.left.color = Color.Black
+                self.__LLturn(brother.left)
+            else:
+                if brother.left.is_red:
+                    self.__LLturn(brother.left.left)
+                brother.right.color = Color.Black
+                self.__RRturn(brother.right)
+        else:
+            if brother.is_left:
+                self.__LLturn(brother.left)
+            else:
+                self.__RRturn(brother.right)
+            self.__black_list_case(node)
 
-    st.image(tmp_file.name, caption='Red-Black Tree Visualization', use_column_width=True)
+    def __LLturn(self, node: Node):
+        if node and node > node.father:
+            self.__RRturn(node.right)
+        father = node.father
+        grandpa = node.grandpa
+        uncle = node.uncle
+        father_right = father.right
+        father.value, grandpa.value = grandpa.value, father.value
+        grandpa.right = grandpa.left
+        grandpa.left = node
+        father.right = uncle
+        father.left = father_right
+        uncle.father = father
+        node.father = grandpa
 
-def main():
-    st.title('Красно-черное дерево визуализатор')
-    st.write('Введите числа через пробел для заполнения дерева')
-    input_numbers = st.text_input('Введите числа')
+    def __RRturn(self, node: Node):
+        if node and node < node.father:
+            self.__LLturn(node.left)
+        father = node.father
+        grandpa = node.grandpa
+        uncle = node.uncle
+        father_left = father.left
+        father.value, grandpa.value = grandpa.value, father.value
+        grandpa.left = grandpa.right
+        grandpa.right = node
+        father.left = uncle
+        father.right = father_left
+        uncle.father = father
+        node.father = grandpa
 
-    if st.button('Построить дерево'):
-        numbers_list = list(map(int, input_numbers.split()))
-        tree = RedBlackTree()
-        for number in numbers_list:
-            tree.insert(number)
-        
-        st.write('Дерево успешно построено!')
-        
-        visualize_red_black_tree(tree)
+    def insert(self, value: int):
+        node = self.search(value)
+        if node: 
+            raise ValueError(f'Value {value} already exists in the tree')
+        node.value = value
+        node.color = Color.Red
+        self.nodes[hash(node.right)] = node.right
+        self.nodes[hash(node.left)] = node.left
+        self.__balance(node)
 
-if __name__ == "__main__":
-    main()
+    def insert_from(self, values: list[int]):
+        for value in values:
+            self.insert(value)
+
+    def delete(self, obj: int | Node):
+        node = obj if isinstance(obj, Node) else self.search(obj)
+        if not node:
+            raise ValueError(f'Value {obj} not exists in tree')
+        elif node.children_count == 0:
+            if node.is_black:
+                self.__black_list_case(node)
+            self.nodes.pop(hash(node.left))
+            self.nodes.pop(hash(node.right))
+            node.value = None
+        elif node.children_count == 1:
+            node_child = node.left or node.right
+            node.value, node_child.value = node_child.value, node.value
+            self.delete(node_child)
+        elif node.children_count == 2:
+            max_right_child = node.left
+            while max_right_child.right:
+                max_right_child = max_right_child.right
+            node.value = max_right_child.value
+            self.delete(max_right_child)
+        Node.update_height_and_position(len(self.nodes))
+
+    def delete_from(self, values: list[int]):
+        for value in values:
+            self.delete(value)
+
+    def search(self, value: int) -> Node:
+        node = self.root
+        while node and node != value:
+            node = node.child(value)
+        return node
+
+    def realize(self, font_size: int = 12, node_size: int = 1500):
+        g = nx.DiGraph()
+        g.add_nodes_from(self.nodes.values())
+        g.add_edges_from(self.edges)
+        options = {
+            "edgecolors": "black",
+            "font_color": "white",
+            "font_size": font_size,
+            "node_color": self.colors,
+            "node_size": node_size,
+            "width": 4,
+        }
+        return g, self.positions, options
+
+    def colors(self) -> list[str]:
+        return [node.color.value for node in self.nodes.values()]
+
+    def edges(self) -> list[tuple[Node]]:
+        return [(node, child) for node in self.nodes.values() for child in [node.right, node.left] if node]
+
+    def positions(self) -> dict[Node, tuple[int]]:
+        return {node: node.position.value for node in self.nodes.values()}
+
+session = st.session_state
+
+if 'tree' not in session:
+    session.tree = RedBlackTree()
+
+if 'inserted_values' not in session:
+    session.inserted_values = []
+
+if 'session_iteration' not in session:
+    session.session_iteration = 0
+
+sidebar = st.sidebar
+
+sidebar.subheader('Вставка чисел')
+sidebar.text_input(label='', key='insert_field', label_visibility='collapsed')
+def clear_insert_text():
+    session.new_values = session.insert_field
+    session["insert_field"] = ""
+sidebar.button(label='Вставить', key='insert_button', on_click=clear_insert_text, use_container_width=True)
+
+sidebar.subheader('Удаление чисел')
+sidebar.text_input(
+    label='',
+    key='values2delete',
+    label_visibility='collapsed'
+)
+def clear_delete_text():
+    session.deleting_values = session.values2delete
+    session["values2delete"] = ""
+sidebar.button(label='Удалить', key='delete_button', on_click=clear_delete_text, use_container_width=True)
+
+sidebar.subheader('Поиск числа')
+sidebar.text_input(
+    label='',
+    key='search_value',
+    label_visibility='visible'
+)
+sidebar.button(label='Поиск', key='search_button', on_click=clear_delete_text, use_container_width=True)
+
+figsize = 7
+margins = 0
+font_size = 10
+node_size = 500
+
+def visualization():
+    tree = session.tree
+    g, pos, options = tree.realize(font_size, node_size)
+    fig = plt.figure(figsize=[figsize]*2)
+    plt.axis('off')
+    nx.draw_networkx(g, pos, **options)
+    plt.margins(margins)
+    st.pyplot(fig)
+
+if session.insert_button:
+    try:
+        new_values = set([
+            int(value) for value in 
+                session.new_values.split()
+        ])
+    except ValueError as e:
+        new_values = None
+        st.error(f'Неправильный ввод: {e}')
+
+    correct_values = []
+    wrong_values = []
+    for value in new_values:
+        try:
+            session.tree.insert(value)
+            session.inserted_values.append(value)
+            correct_values.append(value)
+        except ValueError:
+            wrong_values.append(value)
+    if correct_values:
+        st.success(f'Успешно добавлено: {correct_values}')
+    if wrong_values:
+        st.warning(f'Ошибка выполнения')
+
+if session.delete_button:
+    try:
+        values2delete = set([
+            int(value) for value in 
+                session.deleting_values.split()
+        ])
+    except ValueError as e:
+        values2delete = None
+        st.error(f'Ошибка выполнения')
+
+    correct_values = []
+    wrong_values = []
+    for value in values2delete:
+        try:
+            session.tree.delete(value)
+            session.inserted_values.remove(value)
+            correct_values.append(value)
+        except ValueError:
+            wrong_values.append(value)
+    if correct_values:
+        st.success(f'Удалено: {correct_values}')
+    if wrong_values:
+        st.warning(f'Ошибка выполнения')
+
+search_value = session.search_value
+if session.search_button:
+    try:
+        search_value = int(search_value)
+        found_node = session.tree.search(search_value)
+        if found_node:
+            st.success(f'Число {search_value} найдено')
+        else:
+            st.warning(f'Такого числа нет в дереве')
+    except ValueError:
+        st.error('Ошибка выполнения')
+
+if session.inserted_values:
+    visualization()
+
