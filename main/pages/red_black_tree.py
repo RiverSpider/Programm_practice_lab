@@ -67,9 +67,11 @@ class Node:
         return False
 
     def __gt__(self, obj) -> bool:
-        if not isinstance(obj, (Node, int)):
-            raise ValueError('Object {} not in [Node, int] type'.format(obj))
-        return self.value > obj.value if isinstance(obj, Node) else self.value > obj
+        if isinstance(obj, Node):
+            return self.value > obj.value if self.value and obj.value else self.value > obj
+        elif isinstance(obj, int):
+            return self.value > obj if self.value else False
+        raise ValueError('Object {} not in [Node, int] type'.format(obj))
 
     def __hash__(self) -> int:
         return object.__hash__(self)
