@@ -237,7 +237,7 @@ class RedBlackTree:
                 self.__black_list_case(node)
             self.nodes.pop(hash(node.left))
             self.nodes.pop(hash(node.right))
-            node._value = None
+            node.value = None
         elif node.children_count == 1:
             node_child = node.left or node.right
             node.value, node_child.value = node_child.value, node.value
