@@ -3,10 +3,7 @@ import streamlit as st
 import networkx as nx
 import time
 from enum import Enum
-from position import Position
-from color import Color
 import math
-from node import Node
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -265,16 +262,16 @@ class RedBlackTree:
             node = node.child(value)
         return node
 
-    def realize(self):
+    def realize(self, font_size: int = 10, node_size: int = 500):
         g = nx.DiGraph()
         g.add_nodes_from(self.nodes.values())
         g.add_edges_from(self.edges)
         options = {
             "edgecolors": "black",
             "font_color": "white",
-            "font_size": 7,
+            "font_size": font_size,
             "node_color": self.colors,
-            "node_size": 350,
+            "node_size": node_size,
             "width": 4,
         }
         return g, self.positions, options
