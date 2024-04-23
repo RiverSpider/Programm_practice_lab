@@ -1,11 +1,12 @@
 import matplotlib.pyplot as plt
-import networkx as nx
 import streamlit as st
-import random
-import graphviz
-import tempfile
-from typing import Optional, Tuple
-from graphviz import Digraph, Graph
+import networkx as nx
+import time
+from enum import Enum
+from position import Position
+from color import Color
+import math
+from node import Node
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -23,20 +24,13 @@ class Position:
 		self.x = x
 		self.y = y
 
-	def __add__(self, obj):
+	def __radd__(self, obj):
 		if isinstance(obj, Position):
 			return Position(self.x + obj.x, self.y + obj.y)
 		elif isinstance(obj, tuple):
 			return Position(self.x + obj[0], self.y + obj[1])
 		raise TypeError(f'unsupported operand type(s) for +: Position and {type(obj)}')
-	
-	def __isub__(self, obj):
-		if isinstance(obj, Position):
-			return Position(self.x - obj.x, self.y - obj.y)
-		elif isinstance(obj, tuple):
-			return Position(self.x - obj[0], self.y - obj[1])
-		raise TypeError(f'unsupported operand type(s) for -=: Position and {type(obj)}')
-	
+		
 	def __repr__(self) -> str:
 		return f'<Position{self.value}>'
 
@@ -45,18 +39,16 @@ class Position:
 		return (self.x, self.y)
 
 class Node:
-    Height = 1
-    Pos = Position(0, 0)
-
     def __init__(self, father=None) -> None:
         self.color = Color.Black
         self.father: Node | None = father
         self.left: Node | None = None
+        self._position: Position | None = None
         self.right: Node | None = None
         self._value: int | None = None
 
     def __bool__(self) -> bool:
-        return bool(self.value)
+        return bool(self.value) or self.value == 0
 
     def __eq__(self, obj) -> bool:
         if isinstance(obj, Node):
@@ -78,22 +70,19 @@ class Node:
             raise ValueError('Object {} not in [Node, int] type'.format(obj))
         return self.value < obj.value if isinstance(obj, Node) else self.value < obj
 
+    def __repr__(self) -> str:
+        if self:
+            return f'<{self.color.name}.Node: {self.value}>'
+        elif self.father:
+            side = 'Left' if self.is_left else 'Right'
+            return f'<{side}.List(father={self.father.value})>'
+        return '<Empty root>'
+
     def __str__(self) -> str:
         return str(self.value) if self else 'n'
 
     def child(self, value: int):
         return self.left if value < self else self.right
-
-    @classmethod
-    def update_height_and_position(cls, values_count: int):
-        pred_height = cls.Height
-        cls.Height = int(2 * math.log2(values_count + 1))
-        if cls.Height - pred_height > 0:
-            cls.Pos += (sum([2**n for n in range(pred_height,
-                        cls.Height)]), 2 * (cls.Height - pred_height))
-        else:
-            cls.Pos -= (sum([2**n for n in range(cls.Height,
-                        pred_height)]), 2 * (pred_height - cls.Height))
 
     @property
     def brother(self):
@@ -110,10 +99,6 @@ class Node:
         return self.father.father if self.father else None
 
     @property
-    def height(self):
-        return Node.Height if not self.father else self.father.height - 1
-
-    @property
     def is_black(self) -> bool:
         return self.color == Color.Black
 
@@ -127,7 +112,15 @@ class Node:
 
     @property
     def position(self) -> Position:
-        return Node.Pos if not self.father else self.father.position + ((-1)**self.is_left * 2**(self.father.height - 1), -2)
+        if not self.father:
+            return self._position
+        left = (-1)**self.is_left
+        pos = self.father.position.value
+        return pos + Position(left * 2**(pos[1] - 1), -1)
+    
+    def set_position(self, count: int):
+        height = int(2 * math.log2(count + 1))
+        self._position = Position(2**height - 1, height)
 
     @property
     def uncle(self):
@@ -140,7 +133,7 @@ class Node:
     @value.setter
     def value(self, value: int) -> None:
         self._value = value if isinstance(value, int) else None
-        if self._value:
+        if self:
             self.left = self.left if self.left != None else Node(father=self)
             self.right = self.right if self.right != None else Node(
                 father=self)
@@ -154,9 +147,6 @@ class RedBlackTree:
         self.root: Node = Node()
         self.nodes: dict[int, Node] = {hash(self.root): self.root}
 
-    def __repr__(self) -> str:
-        return '<RedBlackTree(Nodes={})>'.format([str(node) for node in self.nodes.values() if node])
-
     def __balance(self, node: Node):
         if node.grandpa and node.father.is_red:
             if node.uncle.is_red:
@@ -169,7 +159,7 @@ class RedBlackTree:
             elif node.father > node.grandpa:
                 self.__RRturn(node)
         self.root.color = Color.Black
-        Node.update_height_and_position(len(self.nodes))
+        self.root.set_position(len(self.nodes))
 
     def __black_list_case(self, node: Node):
         brother = node.brother
@@ -263,7 +253,7 @@ class RedBlackTree:
                 max_right_child = max_right_child.right
             node.value = max_right_child.value
             self.delete(max_right_child)
-        Node.update_height_and_position(len(self.nodes))
+        self.root.set_position(len(self.nodes))
 
     def delete_from(self, values: list[int]):
         for value in values:
@@ -275,16 +265,16 @@ class RedBlackTree:
             node = node.child(value)
         return node
 
-    def realize(self, font_size: int = 12, node_size: int = 1500):
+    def realize(self):
         g = nx.DiGraph()
         g.add_nodes_from(self.nodes.values())
         g.add_edges_from(self.edges)
         options = {
             "edgecolors": "black",
             "font_color": "white",
-            "font_size": font_size,
+            "font_size": 7,
             "node_color": self.colors,
-            "node_size": node_size,
+            "node_size": 350,
             "width": 4,
         }
         return g, self.positions, options
