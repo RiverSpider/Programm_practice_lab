@@ -327,7 +327,7 @@ sidebar.text_input(
 )
 sidebar.button(label='Поиск', key='search_button', on_click=clear_delete_text, use_container_width=True)
 
-figsize = 20
+figsize = 12
 margins = 0
 font_size = 8
 node_size = 1000
