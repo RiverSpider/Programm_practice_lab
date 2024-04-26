@@ -327,10 +327,10 @@ sidebar.text_input(
 )
 sidebar.button(label='Поиск', key='search_button', on_click=clear_delete_text, use_container_width=True)
 
-figsize = 10
+figsize = 20
 margins = 0
 font_size = 8
-node_size = 2000
+node_size = 500
 
 def visualization():
     tree = session.tree
