@@ -329,7 +329,7 @@ sidebar.button(label='Поиск', key='search_button', on_click=clear_delete_te
 
 figsize = 7
 margins = 0
-font_size = 6
+font_size = 10
 node_size = 1000
 
 def visualization():
